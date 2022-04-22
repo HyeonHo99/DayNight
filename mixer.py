@@ -59,12 +59,42 @@ class MLPMixer(nn.Module):
             )
 
         self.layer_norm = nn.LayerNorm(dim)
+        self.mlp_head = nn.Linear(dim, num_classes)
 
     def forward(self, x):
         x = self.patch_embedding(x)  # (2, 196, 512)
         for mixer_block in self.mixer_blocks:
             x = mixer_block(x)  # (2, 196, 512)
         x = self.layer_norm(x)
+        x = x.mean(dim=1)  # global average pooling (2, 512)  / sequential을 사용했다면 Reduce('b n d -> b d', 'mean') 도 가능
+        x = self.mlp_head(x)  # (2, 1000)
         return x
+
+if __name__ == "__main__":
+    # --------- base_model_param ---------
+    in_channels = 3
+    hidden_size = 512
+    num_classes = 1000
+    patch_size = 16
+    resolution = 224
+    number_of_layers = 8
+    token_dim = 256
+    channel_dim = 2048
+    # ------------------------------------
+
+    model = MLPMixer(
+        in_channels=in_channels,
+        dim=hidden_size,
+        num_classes=num_classes,
+        patch_size=patch_size,
+        image_size=resolution,
+        depth=number_of_layers,
+        token_dim=token_dim,
+        channel_dim=channel_dim
+    )
+    img = torch.rand(2, 3, 224, 224)
+    output = model(img)
+    print(output.shape)
+
 
 
