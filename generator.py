@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from self_attention import Self_Attn
+
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, down=True, use_act=True, **kwargs):
@@ -40,6 +42,7 @@ class Generator(nn.Module):
             [
                 ConvBlock(num_features, num_features*2, kernel_size=3, stride=2, padding=1),
                 ConvBlock(num_features*2, num_features*4, kernel_size=3, stride=2, padding=1),
+                Self_Attn(num_features*4,'relu'),
             ]
         )
         self.res_blocks = nn.Sequential(
@@ -48,6 +51,7 @@ class Generator(nn.Module):
 
         self.up_blocks = nn.ModuleList(
             [
+                Self_Attn(num_features * 4, 'relu'),
                 ConvBlock(num_features*4, num_features*2, down=False, kernel_size=3, stride=2, padding=1, output_padding=1),
                 ConvBlock(num_features*2, num_features*1, down=False, kernel_size=3, stride=2, padding=1, output_padding=1),
             ]
@@ -69,7 +73,7 @@ class Generator(nn.Module):
 def test():
     img_channels = 3
     img_size = 512
-    x = torch.randn((2, img_channels, img_size, img_size))
+    x = torch.randn((1, img_channels, img_size, img_size))
     gen = Generator(img_channels, 9)
     print(gen(x).shape)
 

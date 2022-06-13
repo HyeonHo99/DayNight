@@ -2,7 +2,6 @@ import torch
 import torchvision.utils
 
 from dataset import DayNightDataset
-import sys
 from utils import save_checkpoint, load_checkpoint
 from torch.utils.data import DataLoader
 import torch.nn as nn
@@ -14,7 +13,7 @@ from discriminator import Discriminator
 from generator import Generator
 from torch.utils.tensorboard import SummaryWriter
 
-def train_fn(disc_night, disc_day, gen_day, gen_night, loader, opt_disc, opt_gen, l1, mse, d_scaler, g_scaler):
+def train_fn(disc_night, disc_day, gen_day, gen_night, loader, opt_disc, opt_gen,l1, mse,d_scaler, g_scaler):
     night_reals = 0
     night_fakes = 0
     loop = tqdm(loader, leave=True)
@@ -84,9 +83,11 @@ def train_fn(disc_night, disc_day, gen_day, gen_night, loader, opt_disc, opt_gen
         g_scaler.step(opt_gen)
         g_scaler.update()
 
-        if idx % 200 == 0:
-            save_image(fake_night*0.5+0.5, f"saved_images/day2night_{idx}.png")
-            save_image(fake_day*0.5+0.5, f"saved_images/night2day_{idx}.png")
+
+
+        if config.SAVE_IMAGES and idx % 20 == 0:
+            save_image(fake_night*0.5+0.5, f"saved_images/0509/day2night_{idx}.png")
+            save_image(fake_day*0.5+0.5, f"saved_images/0509/night2day_{idx}.png")
 
         loop.set_postfix(night_real=night_reals/(idx+1), night_fake=night_fakes/(idx+1))
 
@@ -94,8 +95,8 @@ def train_fn(disc_night, disc_day, gen_day, gen_night, loader, opt_disc, opt_gen
 
 def main():
     ## tensorboard
-    writer_fake_day = SummaryWriter(f"runs/night2day")
-    writer_fake_night = SummaryWriter(f"runs/day2night")
+    writer_fake_day = SummaryWriter(f"runs/0509/night2day")
+    writer_fake_night = SummaryWriter(f"runs/0509/day2night")
     step = 1
 
     disc_night = Discriminator(in_channels=3).to(config.DEVICE)
@@ -132,14 +133,14 @@ def main():
         )
 
     dataset = DayNightDataset(
-        root_day=config.TRAIN_DIR+"/night1", root_night=config.TRAIN_DIR+"/night2", transform=config.transforms
+        root_day=config.TRAIN_DIR+"/day", root_night=config.TRAIN_DIR+"/night", transform=config.transforms
     )
     val_dataset = DayNightDataset(
-       root_day=config.VAL_DIR+"/night1", root_night=config.VAL_DIR+"/night2", transform=config.transforms
+       root_day=config.VAL_DIR+"/day", root_night=config.VAL_DIR+"/night", transform=config.transforms
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=10,
+        batch_size=24,
         shuffle=False,
         pin_memory=True,
     )
@@ -173,7 +174,7 @@ def main():
                 break
         step += 1
 
-        if config.SAVE_MODEL and epoch%100 == 0:
+        if config.SAVE_MODEL and (epoch+1)%10 == 0:
             save_checkpoint(gen_night, opt_gen, filename=config.CHECKPOINT_GEN_night)
             save_checkpoint(gen_day, opt_gen, filename=config.CHECKPOINT_GEN_day)
             save_checkpoint(disc_night, opt_disc, filename=config.CHECKPOINT_CRITIC_night)

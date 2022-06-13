@@ -60,6 +60,7 @@ class MLPMixer(nn.Module):
 
         self.layer_norm = nn.LayerNorm(dim)
         self.mlp_head = nn.Linear(dim, num_classes)
+        self.softmax = nn.Sigmoid()
 
     def forward(self, x):
         x = self.patch_embedding(x)  # (2, 196, 512)
@@ -74,12 +75,12 @@ if __name__ == "__main__":
     # --------- base_model_param ---------
     in_channels = 3
     hidden_size = 512
-    num_classes = 1000
-    patch_size = 16
-    resolution = 224
+    num_classes = 1
+    patch_size = 8
+    resolution = 256
     number_of_layers = 8
     token_dim = 256
-    channel_dim = 2048
+    channel_dim = 1024
     # ------------------------------------
 
     model = MLPMixer(
@@ -92,7 +93,7 @@ if __name__ == "__main__":
         token_dim=token_dim,
         channel_dim=channel_dim
     )
-    img = torch.rand(2, 3, 224, 224)
+    img = torch.rand(10, 3, 256, 256)
     output = model(img)
     print(output.shape)
 
